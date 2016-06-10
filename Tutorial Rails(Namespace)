@@ -1,0 +1,30 @@
+=================================================
+##Criar Namespace
+	
+	/config/routes.rb
+
+		namespace :admin do
+			...resources
+		end
+
+#########################################
+
+==========================================
+##Criar pasta referente ao namespace na pasta controller e copiar controllers do namespace a pasta
+	
+	ex: controller/admin 
+
+####################################################
+
+==============================================
+##Adicionar Admin:: para os controllers dentro da pasta
+
+	ex: Admin::AccountController < Application....
+
+######################################################
+
+=================================================
+##Criar pasta admin,copiar as views e adicionar os paths corretos as Views do namespace
+
+
+#####################################################	
