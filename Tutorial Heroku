@@ -1,0 +1,66 @@
+=====================Tutorial Heroku Linux=================
+
+OBS:PREFERENCIALMENTE USAR BANCO DE DADOS POSTGRESQL NA APLICAÇÃO, E TER SERVICO DE VERSIONAMENTO GIT INSTALADO.
+
+
+###Criar Conta no Heroku###
+
+	https://www.heroku.com/
+
+##############################
+
+
+###Instalar Heroku no Terminal#####
+	
+	Copiar a linha a baixo e colar no terminal:
+
+		wget -O- https://toolbelt.heroku.com/install-ubuntu.sh | sh	
+
+	Sera solicitado sua senha de root. feito isso basta apenas aguardar a instalação
+
+######################################
+
+###Efetua Login na pelo terminal#########
+	
+	Digite no Terminal:
+
+		heroku login
+
+	Sera solicitada a instalacao de mais alguns componentes, confirme e aguarde a instalação. logo após será solicitado email e senha. se  tudo correr bem vc, agora podemos comecar a "subir" seus projetos...
+
+##############################################	
+
+###Deploy da Aplicação###########
+
+	OBS: TODOS OS COMANDOS APARTIR DESSE PONTO SERÃO FEITOS NA PASTA DO SEU PROJETO.
+
+	Acesse seu projeto pelo terminal e digite os seguintes comandos:
+	
+		git init => Inicializa um repositiorio git
+		
+		heroku create	=> Cria a aplicação Heroku para deploy
+
+		git add -A => Adiciona os arquivos da pasta
+
+		git commit -m "mensagem"	=> Cria um "commit" para "subir" versão da aplicação
+
+		git push heroku master => Efetua o deploy da aplicacao para o repositorio do heroku
+
+		heroku run rake:db migrate => Efetua as migracoes da aplicação em ambiente de produção
+
+##################################################
+
+####Acessar App #############################
+
+	Digite no Terminal:
+
+		heroku open
+
+###########FIM##################################		
+
+COMANDOS UTEIS:
+	
+	heroku list => lista suas aplicações heroku
+	heroku git:clone -a nomeapp => clona aplicao heroku
+	heroku apps: destroy --app nomeapp => destruir aplicação heroku
+
