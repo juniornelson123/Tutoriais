@@ -162,3 +162,9 @@ rspec:
 agora vc so precisa usar um (sudo)make reset para criar seu banco de dados e migrar suas tabelas, e posteriomente um (sudo)make run e seu projeto estara rodando na porta localhost:3000.
 
 VLWS
+
+
+
+links que eu recomendo
+	https://www.youtube.com/watch?v=cELp_xr5oKc - one bit code -> dominando o docker
+	https://github.com/hantys/instalando-servidor-docker-dokku - hantys -> deploy com dokku
