@@ -1,0 +1,164 @@
+Esse tutorial tem como objetivo criar um projeto rails sem ter nenhuma depencia do ruby/rails instalado em sua maquina, ultilizado apenas containers(docker), não sera feita nenhuma explicação previa para instalação do docker, iremos iniciar esperando que você ja possua conhecimento previo dessa tecnologia.
+
+Iniciaremos rodando o comando para criação do projeto(rails new):
+
+	docker run -it --rm --user "$(id -u):$(id -g)" -v "$PWD":/usr/src/app -w /usr/src/app rails rails new --skip-bundle NOME_DO_PROJETO --database=postgresql
+
+Com esse comando:
+	
+	docker run -it --rm --user "$(id -u):$(id -g)" -v "$PWD":/usr/src/app -w /usr/src/app rails rails new --skip-bundle
+
+Informamos que estaremos iniciando um comando nativo do rails, o rails new para geração da estrutura inicial do projeto	
+
+	rails new --skip-bundle
+
+Com '--skip-bundle'	estamos informando que vamos 'pular' a etapa de bundle(baixar dependencias) do projeto.
+
+	--database=postgresql
+
+Com '--database=postgresql'	estamos informando o banco de dados que sera utilizado, então ja temos a estrutura basica de um projeto rails, pode parecer mais facil usar apenas 'rails new', mas lembre-se que para isso seria nescessario instalar todo um ambiente para programação ruby e ruby on rails, o que pode vir a causar um certo incomodo e uma certa 'poluição' da maquina se feita de maneira errada. Bom agora é hr de configurar a base do nosso DOCKERFILE e o DOCKER COMPOSE, assim como nosso BANCO DE DADOS(ultilizarei o postgres como exemplo)
+
+
+Bom crie um arquivo chamado 'dockerfile'(sem aspas), na rails do seu projeto:
+	
+	touch dockerfile
+
+e cole o seguinte codigo dentro dele:
+
+#----------------------------------------------------	
+	# instalando a versão do ruby
+
+	FROM ruby:2.3-slim
+
+	# Instala as nossas dependencias nescessarias
+	
+	RUN apt-get update && apt-get install -qq -y --no-install-recommends \
+	      build-essential nodejs libpq-dev
+	
+	# Seta nosso path
+
+	ENV INSTALL_PATH /usr/src/app
+	
+	# Cria nosso diretório
+	
+	RUN mkdir -p $INSTALL_PATH
+	
+	# Seta o nosso path como o diretório principal
+	
+	WORKDIR $INSTALL_PATH
+	
+	# Copia o nosso Gemfile para dentro do container
+	
+	COPY Gemfile ./
+	
+	# Instala as Gems
+	
+	RUN bundle install
+	
+	# Copia nosso código para dentro do container
+	
+	COPY . .
+	
+	# Roda nosso servidor
+	
+	CMD ["rails", "server", "-b", "0.0.0.0"]	
+
+#----------------------------------------------------
+
+essa é a estrutura basica para nosso projeto(diria até essencial), estamos instalando a versão setada do ruby, baixando dependencias nescessarias e criando as pastas ultilizadas no nosso projeto, bom eu falei logo a cima que teriamos que montar todo um ambiente para ruby on rails, baixando dependencias e etc, e agora vocês podem me perguntar, 'Mas nao estamos baixando dependencias da mesma maneira?', bom , sim e não, estamos baixando dependencias, porém dentro de um container docker, que pode ser 'destruido' a qualquer momento se quisermos sem afetar nossa maquina, ou seja é bem mais facil(seguro e limpo) gerenciar dependencias instaladas em um container docker, do que na nossa maquina.
+
+Feito isso, vamos criar um arquivo chamado 'docker-compose.yml'(sem aspas), na raiz do nosso projeto :
+
+	touch docker-compose.yml
+
+e colar o seguinte codigo dentro dele:
+	
+#--------------------------------------------------------
+	version: '2' #versão do nosso aquivo(nada a ver com versão do docker)
+
+	services:
+
+		#estamos indicando servicos e volumes que iremos ultilizar com banco de dados
+	
+	  postgres:
+	    image: 'postgres:9.5'
+	    volumes:
+	      - 'postgres:/var/lib/postgresql/data' #local onde sera salvo a imagem do postgresql
+
+		#Nossa aplicação de fato    
+	
+	  website:
+	    depends_on:
+	      - 'postgres'
+	    build: . #pegar o dockerfile e transforma ele numa imagem(cria a imagem do nosso projeto)
+	    ports:
+	      - '3000:3000' #porta a qual podemos acessar
+	    volumes:
+	      - '.:/usr/src/app' #local onde sera salvo a imagem da aplicação
+
+	#volumes que iremos compartilhar com nossa aplicação      
+	
+	volumes:
+	  postgres:		
+
+#------------------------------------------------------------
+
+OBS1:CASO HAJA ALGUM CONFLITO ENTRE O BANCO ULTILIZADO NO DOCKER E O INSTALADO NA SUA MAQUINA, BASTA APENAS PARAR(STOP) O BANCO DE DADOS QUE ESTA OCUPANDO A PORTA NA SUA MAQUINA(NO NOSSO CASO POSTGRESQL)
+
+OBS2:JA ACONTECEU COMIGO!!!!RSRSR
+
+feito isso poderiamos usar 'docker-compose build' e dar um 'build' no nosso container docker, porem sempre será nescessario ultilizar comandos para migração de tabelas, geração do banco, sera precedido por 'docker-compose' ou 'docker-compose run', para tornar mais natural a ultilização dos comandos rails no terminal, criaremos um arquivo de 'MAKE', que ja possui comandos pre-definidos e que podem ser modificados(ou adicionar novos comandos).
+
+Primeiro crie o arquivo 'makefile'(sem aspas) na raiz do seu projeto
+	
+	touch makefile
+
+e cole o sequinte codigo: 
+
+#-------------------------------------------
+
+run:
+	@docker-compose up
+
+data:
+	@bundle exec rake db:migrate
+
+test:
+	@docker-compose run --rm website bundle exec rspec
+
+install:
+	@bundle install
+
+update:
+	@bundle update
+
+create:
+	@docker-compose run --rm website bundle exec rake db:create
+
+migrate:
+	@docker-compose run --rm website rake db:migrate
+
+seed:
+	@docker-compose run --rm website rake db:seed
+
+setup:
+	@docker-compose run --rm website rake db:migrate db:seed
+
+console:
+	@docker-compose run --rm website rails console
+
+reset:
+	@docker-compose run --rm website rake db:drop db:create db:migrate db:seed
+
+pry:
+	@docker-compose run --service-ports website
+
+rspec:
+	@docker-compose run --rm -e "RAILS_ENV=test" website rspec $(spec)
+
+#-----------------------------------------------------------------
+
+
+agora vc so precisa usar um (sudo)make reset para criar seu banco de dados e migrar suas tabelas, e posteriomente um (sudo)make run e seu projeto estara rodando na porta localhost:3000.
+
+VLWS
